@@ -359,20 +359,32 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
+    #Suma de distancias Manhattan en una ruta greedy
     remainingCorners = state[1]
+    currentPos = state[0]
+    currentSum = 0
+    while(remainingCorners != ()):
+        nextCornerAndDist = min([(x, manhattanDistance(x, currentPos)) for x in remainingCorners], key = lambda x: x[1])
+        remainingCorners = tuple(x for x in remainingCorners if x != nextCornerAndDist[0])
+        currentSum = currentSum + nextCornerAndDist[1]
+        currentPos = nextCornerAndDist[0]
     
+    return currentSum
+    
+    """
+    remainingCorners = state[1]
     if(remainingCorners == ()):
         return 0
     
     currentPos = state[0]    
     
     #Minima distancia Manhattan a una esquina (Admisible pero no muy buena)
-    return min(manhattanDistance(currentPos, corner) for corner in remainingCorners)
-    # Suma de distancias Euclideas a todas las esquinas (No admisible por poco, super rápida)
-    #return sum(int(euclideanDistance(currentPos, corner)) for corner in remainingCorners)
+    #return min(manhattanDistance(currentPos, corner) for corner in remainingCorners)
     
+    #Suma de distancias Euclideas a todas las esquinas (No admisible)
+    return sum((euclideanDistance(currentPos, corner)) for corner in remainingCorners)
+    """
     
-
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
