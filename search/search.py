@@ -100,35 +100,53 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
+    
+    #Para lograr un recorrido dfs, nos interesa recorrer primariamente los ultimos nodos agregados, 
+    #ya que estos son los más profundos. Por ese motivo, utilizamos un stack, el cual representa el 
+    #comportamiento deseado
+    
     return search(problem, Stack())
 
 def breadthFirstSearch(problem):
     """
     Search the shallowest nodes in the search tree first.
     """
+    #Para lograr un recorrido bfs, nos interesa recorrer los nodos en el orden que fueron agregados, 
+    #logrando así una expansion a lo ancho. Por ese motivo, utilizamos una queue, el cual representa el 
+    #comportamiento deseado
+    
+    
     return search(problem, Queue())
 
 def uniformCostSearch(problem):
     """
     Search the node of least total cost first.
     """
+    #Representaremos a los estados de la siguiente forma.
     #State = (Position, AcumulatedCost)
     initial_state = (problem.getStartState(), 0)
     initial_actions = []
     initial_candidate = (initial_state, initial_actions)
-    fringe = PriorityQueueWithFunction(lambda x: x[0][1]) #Creamos PQ en base a los costosAcumulados
+    
+    #Creamos una PriorityQueue en base a los costosAcumulados
+    fringe = PriorityQueueWithFunction(lambda x: x[0][1]) 
     fringe.push(initial_candidate)
+    
     closed_set = set()
     while not fringe.isEmpty():
         candidate = fringe.pop()
         state, actions = candidate
+        
         if problem.isGoalState(state[0]): #Preguntamos por coordenada
             return actions
+            
         if state[0] not in closed_set: #Preguntamos por coordenada
-            closed_set.add(state[0]) #Preguntamos por coordenada
+            closed_set.add(state[0])   #Preguntamos por coordenada
             candidate_successors = problem.getSuccessors(state[0]) #Preguntamos por coordenada
             candidate_successors = filter(lambda x: x[0] not in closed_set, candidate_successors) #Preguntamos por coordenada
-            candidate_successors = map(lambda x: ((x[0], state[1] + x[2]), actions + [x[1]]), candidate_successors) #Remapeamos la tupla para nuestra estructura original
+            #Remapeamos la tupla para volver a nuestra estructura original
+            candidate_successors = map(lambda x: ((x[0], state[1] + x[2]), actions + [x[1]]), candidate_successors) 
+            
             for candidate in candidate_successors:
                 fringe.push(candidate)
 
@@ -143,24 +161,31 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """
     Search the node that has the lowest combined cost and heuristic first.
     """
-    
+    #Representaremos a los estados de la siguiente forma.
     #State = (Position, AcumulatedCost)
     initial_state = (problem.getStartState(), 0)
     initial_actions = []
     initial_candidate = (initial_state, initial_actions)
-    fringe = PriorityQueueWithFunction(lambda x: x[0][1] + heuristic(x[0][0], problem)) #Creamos PQ en base a los costosAcumulados + heuristica
+    
+    #Creamos una PriorityQueue en base a los costosAcumulados, sumando el valor de la heuristica
+    fringe = PriorityQueueWithFunction(lambda x: x[0][1] + heuristic(x[0][0], problem)) 
     fringe.push(initial_candidate)
+    
     closed_set = set()
     while not fringe.isEmpty():
         candidate = fringe.pop()
         state, actions = candidate
+        
         if problem.isGoalState(state[0]): #Preguntamos por coordenada
             return actions
-        if state[0] not in closed_set: #Preguntamos por coordenada
-            closed_set.add(state[0]) #Preguntamos por coordenada
+        
+        if state[0] not in closed_set:    #Preguntamos por coordenada
+            closed_set.add(state[0])      #Preguntamos por coordenada
             candidate_successors = problem.getSuccessors(state[0]) #Preguntamos por coordenada
             candidate_successors = filter(lambda x: x[0] not in closed_set, candidate_successors) #Preguntamos por coordenada
-            candidate_successors = map(lambda x: ((x[0], state[1] + x[2]), actions + [x[1]]), candidate_successors) #Remapeamos la tupla para nuestra estructura original
+            #Remapeamos la tupla para volver a nuestra estructura original
+            candidate_successors = map(lambda x: ((x[0], state[1] + x[2]), actions + [x[1]]), candidate_successors) 
+            
             for candidate in candidate_successors:
                 fringe.push(candidate)
 

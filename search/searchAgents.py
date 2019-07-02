@@ -279,7 +279,8 @@ class CornersProblem(search.SearchProblem):
                 print 'Warning: no food in corner ' + str(corner)
         self._expanded = 0 # Number of search nodes expanded
 
-        #"*** YOUR CODE HERE ***"
+        #*** YOUR CODE HERE ***
+        #Agregamos el campo "función de costo asociado a un nodo".
         self.costFn = costFn
 
 
@@ -287,7 +288,8 @@ class CornersProblem(search.SearchProblem):
         """
         Returns the start state (in your state space, not the full Pacman state space)
         """
-        #"*** YOUR CODE HERE ***"
+        #*** YOUR CODE HERE ***
+        #Estructuramos una tupla que sean las esquinas que aún no hayamos recorrido
         remainingCorners = tuple(x for x in self.corners if x != self.startingPosition)
         return (self.startingPosition, remainingCorners)
         
@@ -297,6 +299,7 @@ class CornersProblem(search.SearchProblem):
         Returns whether this search state is a goal state of the problem
         """
         #"*** YOUR CODE HERE ***"
+        #Preguntamos si recorrimos todas las esquinas y devolvemos acorde.
         return state[1] == ()
 
     def getSuccessors(self, state):
@@ -311,8 +314,8 @@ class CornersProblem(search.SearchProblem):
          cost of expanding to that successor
         """
 
-        currentPosition = state[0] #
-        remainingCorners = state[1] #
+        currentPosition = state[0] #Posicion actual
+        remainingCorners = state[1] #Esquinas restantes
         successors = []
         for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
             x,y = currentPosition
@@ -320,7 +323,8 @@ class CornersProblem(search.SearchProblem):
             nextx, nexty = int(x + dx), int(y + dy)
             hitsWall = self.walls[nextx][nexty]
 
-            #"*** YOUR CODE HERE ***"
+            #*** YOUR CODE HERE ***
+            #Realizamos un movimiento y corroboramos las esquinas que faltan recorrer. 
             if not hitsWall:
                 nextPosition = (nextx, nexty)
                 newCorners = tuple(x for x in remainingCorners if x != nextPosition)
