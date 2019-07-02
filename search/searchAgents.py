@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # searchAgents.old.py
 # -------------------
 # Licensing Information: Please do not distribute or publish solutions to this
@@ -342,6 +344,22 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
+# Función auxiliar para la heurística del cornersProblem.
+# Dada una posición y una tupla de objetivos, devuelve la longitud
+# del camino mínimo que parte de la posición y recorre todos los objetivos.
+def MinimumPathLength(currentPosition, remainingCorners):
+	if(remainingCorners == ()):
+		return 0;
+	
+	distances = []
+	for target in remainingCorners:
+		cornersWithoutTarget = tuple(x for x in remainingCorners if x != target)
+		subpathLength = MinimumPathLength(target, cornersWithoutTarget)
+		distances = distances + [subpathLength + manhattanDistance(currentPosition, target)]
+	
+	return min(distances)
+
+
 def cornersHeuristic(state, problem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -359,7 +377,67 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    #Suma de distancias Manhattan en una ruta greedy
+    # Se detallan los intentos sucesivos que tuvimos en la búsqueda de una heurística adecuada.
+    # En todas las situaciones partimos del problema relajado al no considerar que haya paredes en el laberinto.
+    # Se agregan para cada caso las estadísticas dadas para tinyCorners, mediumCorners y bigCorners.
+    
+    """
+    # PRIMER INTENTO
+    # Función heurística: Mínima distancia Manhattan a una esquina no visitada.
+    # La función es admisible, pero no es muy buena. Se terminan expandiendo
+    # demasiados nodos.
+ 
+    #         Costo    Nodos_expandidos
+    # Tiny:   28       226
+    # Medium: 106      1491
+    # Big:    162      5862
+
+    remainingCorners = state[1]
+    if(remainingCorners == ()):
+        return 0
+    
+    currentPos = state[0]    
+    
+    return min(manhattanDistance(currentPos, corner) for corner in remainingCorners)
+    """
+    
+    """
+    # SEGUNDO INTENTO
+    # Función heurística: Suma de distancias Euclídeas a todas las esquinas no visitadas.
+    # Si bien presenta una mejora en la cantidad de nodos expandidos
+    # sin ser tan compleja computacionalmente, vimos que la heurística no es admisible
+    # pues, por ejemplo, sobreestima el costo de ruta si quedan dos esquinas para visitar
+    # y nos encontramos en una tercer esquina.
+    # En este caso, se forma un triángulo rectángulo entre nuestra posición y los objetivos,
+    # y la heurística devuelve un costo de ruta mayor (un cateto + hipotenusa) que la ruta óptima
+    # (un cateto + el otro cateto).
+    
+    #         Costo   Nodos_expandidos
+    # Tiny:   28      182
+    # Medium: 106     722
+    # Big:    166     2681    (Vemos que devuelve un costo de ruta subóptimo)
+    
+    remainingCorners = state[1]
+    if(remainingCorners == ()):
+        return 0
+    
+    currentPos = state[0]    
+    
+    return sum((euclideanDistance(currentPos, corner)) for corner in remainingCorners)
+    """
+    
+    """
+    # TERCER INTENTO
+    # Función heurística: Suma de distancias Manhattan recorriendo las esquinas restantes de una forma greedy.
+    # Agregando un poco de procesamiento, podemos llegar a una función que mejora el rendimiento de una manera 
+    # notable. Sin embargo, encontramos que en un caso muy peculiar la función también sobreestimaría el costo de ruta,
+    # haciéndola no admisible en casos particulares.
+    
+    #         Costo   Nodos_expandidos
+    # Tiny:   28      155
+    # Medium: 106     692
+    # Big:    162     1740
+    
     remainingCorners = state[1]
     currentPos = state[0]
     currentSum = 0
@@ -370,20 +448,25 @@ def cornersHeuristic(state, problem):
         currentPos = nextCornerAndDist[0]
     
     return currentSum
-    
     """
-    remainingCorners = state[1]
-    if(remainingCorners == ()):
-        return 0
     
-    currentPos = state[0]    
+    # CUARTO INTENTO
+    # Función heurística: Cantidad de desplazamientos necesarios para recorrer las esquinas restantes de manera óptima.
+    # Aprovechando que el problema requiere siempre recorrer a lo sumo cuatro puntos, creemos que podemos demandar
+    # un poco más de procesamiento y llegar a una heurística con las bondades del caso anterior, pero que se mantenga admisible.
+    # Vemos que expande más nodos en los casos pequeños, pero la misma cantidad en el más grande. 
     
-    #Minima distancia Manhattan a una esquina (Admisible pero no muy buena)
-    #return min(manhattanDistance(currentPos, corner) for corner in remainingCorners)
+    #         Costo   Nodos_expandidos
+    # Tiny:   28      159
+    # Medium: 106     741
+    # Big:    162     1740
     
-    #Suma de distancias Euclideas a todas las esquinas (No admisible)
-    return sum((euclideanDistance(currentPos, corner)) for corner in remainingCorners)
-    """
+    return MinimumPathLength(state[0], state[1])
+    
+    
+    
+    
+    
     
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
