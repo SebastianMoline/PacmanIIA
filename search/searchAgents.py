@@ -534,6 +534,80 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+def GridToList(foodGrid):
+    foodList = []
+    for (x, column) in enumerate(foodGrid):
+        for (y, hasFood) in enumerate (column):
+            if(hasFood):
+                foodList = foodList + [(x, y)]
+    return foodList
+
+
+def findParent(parent, vertex):
+    if parent[vertex] == vertex:
+        return vertex
+    return findParent(parent, parent[vertex])
+
+def union(parent, rank, firstParent, secondParent):
+    firstRoot = findParent(parent, firstParent)
+    secondRoot = findParent(parent, secondParent)
+    
+    if(rank[firstRoot] < rank[secondRoot]):
+        parent[firstRoot] = secondRoot
+    elif(rank[firstRoot] > rank[secondRoot]):
+        parent[secondRoot] = firstRoot
+    else:
+        parent[secondRoot] = firstRoot
+        rank[firstRoot] += 1
+    
+
+def kruskalWeight(edges, numVertices):
+    
+    edges = sorted(edges, key = lambda x: x[2])
+    
+    parent = []
+    rank = []
+    
+    for index in range(numVertices):
+        parent.append(index)
+        rank.append(0)
+    
+    edgeCounter = 0
+    edgeIndex = 0
+    weightSum = 0
+    
+    while edgeCounter < numVertices - 1:
+        firstV, secondV, distance = edges[edgeIndex]
+        edgeIndex = edgeIndex + 1
+        
+        firstParent = findParent(parent, firstV)
+        secondParent = findParent(parent, secondV) 
+        
+        if firstParent != secondParent:
+            edgeCounter = edgeCounter + 1
+            weightSum = weightSum + distance
+            union(parent, rank, firstParent, secondParent)
+    
+    return weightSum
+    
+    
+
+def minSpanTreeWeight(vertices):
+    edges = []
+    firstIndex = 0
+    listLength = len(vertices)
+    
+    while(firstIndex < listLength - 1):
+        firstP = vertices[firstIndex]
+        secondIndex = firstIndex + 1
+        while(secondIndex < listLength):
+            secondP = vertices[secondIndex]
+            edges = edges + [(firstIndex, secondIndex, manhattanDistance(firstP, secondP))]
+            secondIndex = secondIndex + 1
+        firstIndex = firstIndex + 1
+            
+    return kruskalWeight(edges, listLength)
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -561,8 +635,10 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
-
+    foodList = GridToList(foodGrid)
+    return minSpanTreeWeight(foodList + [position])
+    
+    
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
     def registerInitialState(self, state):

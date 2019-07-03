@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # search.py
 # ---------
 # Licensing Information: Please do not distribute or publish solutions to this
