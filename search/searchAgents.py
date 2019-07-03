@@ -534,6 +534,8 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+# Dada la grilla de posiciones de comida, devolvemos una lista con las coordenadas
+# de cada una de ellas.
 def GridToList(foodGrid):
     foodList = []
     for (x, column) in enumerate(foodGrid):
@@ -542,16 +544,16 @@ def GridToList(foodGrid):
                 foodList = foodList + [(x, y)]
     return foodList
 
-
+# Función auxiliar del algoritmo de Kruskal.
+# Dado un vértice, devuelve la raíz del subárbol al que pertenece.
 def findParent(parent, vertex):
     if parent[vertex] == vertex:
         return vertex
     return findParent(parent, parent[vertex])
 
-def union(parent, rank, firstParent, secondParent):
-    firstRoot = findParent(parent, firstParent)
-    secondRoot = findParent(parent, secondParent)
-    
+# Función auxiliar del algoritmo de Kruskal.
+# Dados dos vértices, combina los subárboles a los que pertenece cada uno.
+def union(parent, rank, firstRoot, secondRoot):
     if(rank[firstRoot] < rank[secondRoot]):
         parent[firstRoot] = secondRoot
     elif(rank[firstRoot] > rank[secondRoot]):
@@ -560,7 +562,8 @@ def union(parent, rank, firstParent, secondParent):
         parent[secondRoot] = firstRoot
         rank[firstRoot] += 1
     
-
+# Algoritmo de Kruskal para encontrar el árbol recubridor minimal del grafo
+# pasado como argumento.
 def kruskalWeight(edges, numVertices):
     
     edges = sorted(edges, key = lambda x: x[2])
@@ -591,7 +594,9 @@ def kruskalWeight(edges, numVertices):
     return weightSum
     
     
-
+# Dada la lista de posiciones, construimos una lista de aristas del grafo.
+# Para ello, las renombramos para que sean de la forma [0, 1, ..., listLength]
+# y calculamos la distancia Manhattan entre cada par de ellas.
 def minSpanTreeWeight(vertices):
     edges = []
     firstIndex = 0
@@ -635,6 +640,19 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
+    # Función heurística: Suma de los pesos de las aristas del Árbol Recubridor Minimal
+    # (Minimum Spanning Tree) formado por los puntos faltantes y la posición actual,
+    # tomando como pesos de las aristas la distancia Manhattan entre los puntos involucrados.
+    # Sabemos que la función es admisible: El objetivo es encontrar un camino Hamiltoniano
+    # de suma de pesos de arista mínimos con los vértices antes descriptos. Un camino Hamiltoniano
+    # es un árbol recubridor del grafo, con lo cual el árbol recubridor minimal siempre tendrá
+    # una suma de pesos de aristas menor o igual a la cantidad de movimientos que necesitaríamos
+    # para recorrer el camino óptimo.
+    # Para calcular el valor de la heurística, construimos el grafo antes descripto calculando las 
+    # distancias Manhattan entre todos los vértices. Luego, generamos un árbol recubridor minimal 
+    # usando el algoritmo de Kruskal y retornamos la suma de los pesos de las aristas elegidas.
+    
+    # Generamos una lista de todos los puntos con comida junto con nuestra posición actual.
     foodList = GridToList(foodGrid)
     return minSpanTreeWeight(foodList + [position])
     
