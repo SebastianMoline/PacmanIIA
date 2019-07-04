@@ -352,16 +352,16 @@ class CornersProblem(search.SearchProblem):
 # Dada una posición y una tupla de objetivos, devuelve la longitud
 # del camino mínimo que parte de la posición y recorre todos los objetivos.
 def MinimumPathLength(currentPosition, remainingCorners):
-	if(remainingCorners == ()):
-		return 0;
-	
-	distances = []
-	for target in remainingCorners:
-		cornersWithoutTarget = tuple(x for x in remainingCorners if x != target)
-		subpathLength = MinimumPathLength(target, cornersWithoutTarget)
-		distances = distances + [subpathLength + manhattanDistance(currentPosition, target)]
-	
-	return min(distances)
+    if(remainingCorners == ()):
+        return 0;
+    
+    distances = []
+    for target in remainingCorners:
+        cornersWithoutTarget = tuple(x for x in remainingCorners if x != target)
+        subpathLength = MinimumPathLength(target, cornersWithoutTarget)
+        distances = distances + [subpathLength + manhattanDistance(currentPosition, target)]
+    
+    return min(distances)
 
 
 def cornersHeuristic(state, problem):
@@ -595,9 +595,12 @@ def kruskalWeight(edges, numVertices):
     
     
 # Dada la lista de posiciones, construimos una lista de aristas del grafo.
-# Para ello, las renombramos para que sean de la forma [0, 1, ..., listLength]
-# y calculamos la distancia Manhattan entre cada par de ellas.
-def minSpanTreeWeight(vertices):
+# Para ello, las renombramos para que sean de la forma [0, 1, ..., listLength - 1].
+# Si ambos vértices son puntos de comida, ya calculamos su distancia en el laberinto,
+# por lo que utilizamos ese valor como peso del arista. 
+# Si no, uno de los elementos es la posición del jugador, con lo que 
+# simplemente utilizamos la distancia Manhattan entre ambos puntos.
+def minSpanTreeWeight(vertices, distanceDict):
     edges = []
     firstIndex = 0
     listLength = len(vertices)
@@ -607,11 +610,40 @@ def minSpanTreeWeight(vertices):
         secondIndex = firstIndex + 1
         while(secondIndex < listLength):
             secondP = vertices[secondIndex]
-            edges = edges + [(firstIndex, secondIndex, manhattanDistance(firstP, secondP))]
+            if( (firstP, secondP) in distanceDict):
+                edges = edges + [(firstIndex, secondIndex, distanceDict[(firstP, secondP)])]
+            else:
+                edges = edges + [(firstIndex, secondIndex, manhattanDistance(firstP, secondP))]
             secondIndex = secondIndex + 1
         firstIndex = firstIndex + 1
             
     return kruskalWeight(edges, listLength)
+
+
+# Dada la lista inicial de posiciones de comida, se genera un diccionario que dice
+# la distancia en el laberinto para cada par de puntos.
+# Esta función llama a un BFS para cada par de puntos, lo que podría optimizarse
+# llamando a un BFS por punto y calculando las distancias a todos los demás
+# en un único llamado. Sin embargo, eso requeriría redefinir toda la parte de BFS
+# específicamente para el problema, con lo cual dejamos esta implementación.
+def fillMazeDistances(foodList, problem):
+    distances = {}
+    firstIndex = 0
+    listLength = len(foodList)
+    
+    while(firstIndex < listLength - 1):
+        firstP = foodList[firstIndex]
+        secondIndex = firstIndex + 1
+        while(secondIndex < listLength):
+            secondP = foodList[secondIndex]
+            pointsDistance = mazeDistance(firstP, secondP, problem.startingGameState)
+            distances[(firstP, secondP)] = pointsDistance
+            distances[(secondP, firstP)] = pointsDistance
+            secondIndex = secondIndex + 1
+        firstIndex = firstIndex + 1
+    
+    return distances
+
 
 def foodHeuristic(state, problem):
     """
@@ -642,19 +674,27 @@ def foodHeuristic(state, problem):
     "*** YOUR CODE HERE ***"
     # Función heurística: Suma de los pesos de las aristas del Árbol Recubridor Minimal
     # (Minimum Spanning Tree) formado por los puntos faltantes y la posición actual,
-    # tomando como pesos de las aristas la distancia Manhattan entre los puntos involucrados.
+    # tomando como pesos de las aristas la distancia en el laberinto entre los puntos involucrados.
     # Sabemos que la función es admisible: El objetivo es encontrar un camino Hamiltoniano
     # de suma de pesos de arista mínimos con los vértices antes descriptos. Un camino Hamiltoniano
     # es un árbol recubridor del grafo, con lo cual el árbol recubridor minimal siempre tendrá
     # una suma de pesos de aristas menor o igual a la cantidad de movimientos que necesitaríamos
     # para recorrer el camino óptimo.
     # Para calcular el valor de la heurística, construimos el grafo antes descripto calculando las 
-    # distancias Manhattan entre todos los vértices. Luego, generamos un árbol recubridor minimal 
+    # distancias entre todos los vértices. Luego, generamos un árbol recubridor minimal 
     # usando el algoritmo de Kruskal y retornamos la suma de los pesos de las aristas elegidas.
     
-    # Generamos una lista de todos los puntos con comida junto con nuestra posición actual.
+    # Generamos una lista de todos los puntos con comida.
     foodList = GridToList(foodGrid)
-    return minSpanTreeWeight(foodList + [position])
+    
+    # Precalculamos las distancias en el laberinto entre cada par de puntos con comida.
+    if(len(problem.heuristicInfo) == 0):
+        problem.heuristicInfo = fillMazeDistances(foodList, problem)
+    
+    # Calculamos el peso del árbol recubridor minimal, pasando como vertices
+    # las coordenadas de la comida restante junto con la posición actual,
+    # además de las distancias entre comidas en el laberinto.
+    return minSpanTreeWeight(foodList + [position], problem.heuristicInfo)
     
     
 class ClosestDotSearchAgent(SearchAgent):
